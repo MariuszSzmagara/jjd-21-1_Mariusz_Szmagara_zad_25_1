@@ -18,16 +18,13 @@ public class TaskController {
 
     private TaskRepository taskRepository;
 
-
     public TaskController(TaskRepository taskRepository) {
         this.taskRepository = taskRepository;
     }
 
     @GetMapping("/")
     public String getHome(Model model) {
-        boolean completed = false;
-        List<Task> toDoTasksList = taskRepository.findAllByCompletedOrderByDeadlineDate(completed);
-        model.addAttribute("toDoTasksList", toDoTasksList);
+        model.addAttribute("toDoTasksList", taskRepository.findAllByCompletedOrderByDeadlineDate(false));
         model.addAttribute("localDateNow", LocalDate.now());
         return "home";
     }
@@ -54,9 +51,7 @@ public class TaskController {
 
     @GetMapping("/completed")
     public String getCompleted(Model model) {
-        boolean completed = true;
-        List<Task> completedTasksList = taskRepository.findAllByCompletedOrderByDeadlineDate(completed);
-        model.addAttribute("completedTasksList", completedTasksList);
+        model.addAttribute("completedTasksList", taskRepository.findAllByCompletedOrderByDeadlineDate(true));
         return "completed";
     }
 
@@ -81,37 +76,15 @@ public class TaskController {
     }
 
     @PostMapping("/task/{id}/update")
-    public String updateTaskById(@PathVariable Long id, Task task, Model model) {
-        Optional<Task> taskById = taskRepository.findById(id);
-        model.addAttribute("id", id);
-        if (taskById.isPresent()) {
-            Task taskToUpdate = taskById.get();
-            taskToUpdate.setName(task.getName());
-            taskToUpdate.setCategory(task.getCategory());
-            taskToUpdate.setCompleted(task.isCompleted());
-            taskToUpdate.setDescription(task.getDescription());
-            taskToUpdate.setDeadlineDate(task.getDeadlineDate());
-            taskRepository.save(taskToUpdate);
-            return "redirect:/";
-
-        } else {
-            return "error";
-        }
+    public String updateTaskById(Task taskToUpdate) {
+        taskRepository.save(taskToUpdate);
+        return "redirect:/";
     }
 
     @GetMapping("/task/{id}/checkCompleted")
-    public String checkCompleted(@PathVariable Long id, Model model) {
-        Optional<Task> taskById = taskRepository.findById(id);
-        model.addAttribute("id", id);
-        if (taskById.isPresent()) {
-            Task checkCompleted = taskById.get();
-            checkCompleted.setCompleted(true);
-            taskRepository.save(checkCompleted);
-            return "redirect:/";
-
-        } else {
-            return "error";
-        }
+    public String checkCompleted(@PathVariable Long id) {
+        taskRepository.updateTaskCompletedById(true, id);
+        return "redirect:/";
     }
 
 }
